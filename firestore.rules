@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User accounts and developer metadata
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // API Keys metadata (only hashed keys stored; never raw secrets)
+    match /api_keys/{keyId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Usage and quota summaries
+    match /usage_summaries/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only backend service account can increment usage quotas
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
