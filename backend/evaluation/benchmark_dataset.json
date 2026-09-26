@@ -1,0 +1,62 @@
+[
+  {
+    "id": "h_creative_01",
+    "category": "human",
+    "domain": "creative",
+    "text": "The radiator in my grandfather's workshop clanked like an old brass clock winding down. Outside, gray sleet had turned the driveway into a slip of frozen mud. He did not say much while wiping sawdust from the chisel; he just hummed an off-key tune from forty years ago, breathing warmth into his knuckles every few minutes."
+  },
+  {
+    "id": "h_personal_02",
+    "category": "human",
+    "domain": "personal_essay",
+    "text": "I never learned to cook until I was twenty-six and stranded in a studio apartment above a bakery. My first attempts at tomato sauce were acidic disasters that burned the bottom of the stainless steel pot. Eventually, after dozens of burnt garlic cloves and frantic phone calls to my mother, I discovered the quiet magic of slow-simmered onions."
+  },
+  {
+    "id": "h_tech_03",
+    "category": "human",
+    "domain": "technical",
+    "text": "When we refactored our caching tier, we hit an ugly race condition between Redis pub-sub notifications and our in-memory cache eviction routines. A quick lock prevented the stale writes, but it tanked our p99 latency during peak traffic spikes. We ended up switching to monotonic revision counters instead."
+  },
+  {
+    "id": "h_journal_04",
+    "category": "human",
+    "domain": "journalism",
+    "text": "City council members voted six to two on Thursday to approve the contentious light rail extension through the eastern industrial corridor. Neighborhood representatives had staged protests outside city hall for three consecutive weeks, arguing the planned construction would disrupt local supply routes and displace family-owned warehouses."
+  },
+  {
+    "id": "ai_gen_01",
+    "category": "ai",
+    "domain": "academic",
+    "text": "Furthermore, it is important to remember that artificial intelligence plays a crucial role in modern educational paradigms. In conclusion, by navigating the complexities of personalized learning algorithms, institutions can seamlessly foster student engagement. Moreover, this multifaceted strategy stands as a testament to the transformative power of technological progress."
+  },
+  {
+    "id": "ai_gen_02",
+    "category": "ai",
+    "domain": "business",
+    "text": "In today's fast-paced digital ecosystem, organizations must harness the power of scalable cloud architecture. Furthermore, it is important to note that cross-functional synergy plays a pivotal role in driving sustainable operational efficiency. In summary, navigating these strategic complexities serves as a beacon of excellence and innovation."
+  },
+  {
+    "id": "ai_gen_03",
+    "category": "ai",
+    "domain": "creative",
+    "text": "The ancient forest stood as a magnificent testament to the enduring tapestry of nature's majesty. Furthermore, the gentle breeze whispered through the emerald canopy, creating a symphony of tranquil harmony. It is worth noting that beneath the moss-covered rocks, a myriad of unseen creatures thrived in seamless balance."
+  },
+  {
+    "id": "ai_gen_04",
+    "category": "ai",
+    "domain": "technical",
+    "text": "Furthermore, microservices play a crucial role in modern software development frameworks. By leveraging container orchestration, teams can seamlessly navigate the complexities of enterprise scalability. In conclusion, this multifaceted paradigm serves as a testament to contemporary engineering best practices and agile delivery mechanisms."
+  },
+  {
+    "id": "edited_ai_01",
+    "category": "edited_ai",
+    "domain": "business",
+    "text": "Cloud architecture is vital for modern software companies. While organizations often struggle with operational complexity, cross-functional teams help streamline the migration process. We observed significant improvements in deployment speed once basic CI pipelines were established."
+  },
+  {
+    "id": "edited_ai_02",
+    "category": "edited_ai",
+    "domain": "academic",
+    "text": "Personalized learning algorithms offer intriguing potential for modern classrooms. However, educators must balance automated recommendations with human mentorship. Our preliminary study observed measurable gains in reading comprehension among participating students."
+  }
+]
