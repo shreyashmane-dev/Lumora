@@ -4,8 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Sparkles, Menu, X, Shield, Terminal, BookOpen, Activity, Cpu, LogOut, User } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
+
+const ThemeToggle = dynamic(() => import("./ThemeToggle").then((m) => m.ThemeToggle), {
+  ssr: false
+});
 
 export function Navbar() {
   const pathname = usePathname();

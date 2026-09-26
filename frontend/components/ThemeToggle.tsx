@@ -10,9 +10,9 @@ export function ThemeToggle() {
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("lumora_theme") as "dark" | "light" | null;
-    const initialTheme = saved || "dark";
-    setTheme(initialTheme);
-    if (initialTheme === "light") {
+    const initial = saved || "dark";
+    setTheme(initial);
+    if (initial === "light") {
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
     } else {
@@ -34,23 +34,19 @@ export function ThemeToggle() {
     }
   };
 
-  if (!mounted) {
-    return (
-      <div className="w-9 h-9 rounded-xl border border-slate-800 bg-slate-900/60" />
-    );
-  }
-
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      className="p-2 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all flex items-center justify-center shadow-sm"
+      suppressHydrationWarning
+      className="w-9 h-9 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all flex items-center justify-center shadow-sm"
       aria-label="Toggle dark/light theme"
-      title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      title={mounted && theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
     >
-      {theme === "dark" ? (
-        <Sun className="w-4 h-4 text-amber-400" />
-      ) : (
+      {mounted && theme === "light" ? (
         <Moon className="w-4 h-4 text-violet-400" />
+      ) : (
+        <Sun className="w-4 h-4 text-amber-400" />
       )}
     </button>
   );
