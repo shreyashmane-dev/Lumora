@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Terminal, Play, Copy, Check, Clock, ShieldCheck, RefreshCw } from "lucide-react";
 import { listApiKeys, KeyItem } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -32,6 +33,7 @@ const DEFAULT_PAYLOADS = {
 };
 
 export default function PlaygroundPage() {
+  const { user } = useAuth();
   const [endpoint, setEndpoint] = useState<"detect" | "humanize" | "analyze">("detect");
   const [keys, setKeys] = useState<KeyItem[]>([]);
   const [selectedKey, setSelectedKey] = useState<string>("lum_live_dev_test_suite_key_2026_demo");
@@ -44,11 +46,13 @@ export default function PlaygroundPage() {
   const [responseBody, setResponseBody] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const activeUserId = user?.uid || "dev_default_user";
+
   useEffect(() => {
-    listApiKeys()
+    listApiKeys(activeUserId)
       .then((k) => setKeys(k.filter((key) => key.is_active)))
       .catch((e) => console.error(e));
-  }, []);
+  }, [user]);
 
   const handleEndpointChange = (ep: "detect" | "humanize" | "analyze") => {
     setEndpoint(ep);
@@ -82,6 +86,9 @@ export default function PlaygroundPage() {
       };
       if (activeApiKey) {
         headers["Authorization"] = `Bearer ${activeApiKey}`;
+      }
+      if (activeUserId) {
+        headers["X-User-ID"] = activeUserId;
       }
 
       const res = await fetch(url, {
@@ -122,9 +129,9 @@ export default function PlaygroundPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="pb-6 border-b border-zinc-800">
-        <h1 className="text-2xl font-bold text-white tracking-tight">API Playground</h1>
-        <p className="text-zinc-400 text-xs sm:text-sm mt-1">
+      <div className="pb-6 border-b border-zinc-200 dark:border-zinc-800">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">API Playground</h1>
+        <p className="text-zinc-600 dark:text-zinc-400 text-xs sm:text-sm mt-1">
           Test live HTTP requests against LUMORA REST endpoints with customized authentication and payloads.
         </p>
       </div>
@@ -132,32 +139,32 @@ export default function PlaygroundPage() {
       {/* Request Configuration */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Request Builder */}
-        <div className="rounded-2xl bg-zinc-900/70 border border-zinc-800 p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-            <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">
+        <div className="rounded-2xl bg-white dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800 p-5 space-y-4 shadow-sm dark:shadow-none transition-colors">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+            <span className="text-xs font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 font-semibold">
               Request Configuration
             </span>
-            <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-xs font-mono">
+            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-950 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-mono">
               <button
                 onClick={() => handleEndpointChange("detect")}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  endpoint === "detect" ? "bg-violet-600 text-white font-semibold" : "text-zinc-400 hover:text-white"
+                className={`px-2.5 py-1 rounded-lg transition-colors ${
+                  endpoint === "detect" ? "bg-violet-600 text-white font-semibold shadow-sm" : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 POST /v1/detect
               </button>
               <button
                 onClick={() => handleEndpointChange("humanize")}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  endpoint === "humanize" ? "bg-emerald-600 text-white font-semibold" : "text-zinc-400 hover:text-white"
+                className={`px-2.5 py-1 rounded-lg transition-colors ${
+                  endpoint === "humanize" ? "bg-emerald-600 text-white font-semibold shadow-sm" : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 POST /v1/humanize
               </button>
               <button
                 onClick={() => handleEndpointChange("analyze")}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  endpoint === "analyze" ? "bg-indigo-600 text-white font-semibold" : "text-zinc-400 hover:text-white"
+                className={`px-2.5 py-1 rounded-lg transition-colors ${
+                  endpoint === "analyze" ? "bg-indigo-600 text-white font-semibold shadow-sm" : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 POST /v1/analyze
@@ -167,7 +174,7 @@ export default function PlaygroundPage() {
 
           {/* Authentication selection */}
           <div>
-            <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+            <label className="block text-xs font-mono uppercase text-zinc-600 dark:text-zinc-400 mb-1.5 font-semibold">
               API Key Authentication
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -177,7 +184,7 @@ export default function PlaygroundPage() {
                   setSelectedKey(e.target.value);
                   setCustomKey("");
                 }}
-                className="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-zinc-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 flex-1"
+                className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-zinc-800 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-1"
               >
                 <option value="lum_live_dev_test_suite_key_2026_demo">Default Development Key</option>
                 {keys.map((k) => (
@@ -191,21 +198,21 @@ export default function PlaygroundPage() {
                 placeholder="Or paste full raw key..."
                 value={customKey}
                 onChange={(e) => setCustomKey(e.target.value)}
-                className="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-zinc-300 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 flex-1"
+                className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-zinc-800 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-1"
               />
             </div>
           </div>
 
           {/* JSON Payload Editor */}
           <div>
-            <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+            <label className="block text-xs font-mono uppercase text-zinc-600 dark:text-zinc-400 mb-1.5 font-semibold">
               JSON Body
             </label>
             <textarea
               rows={11}
               value={payloadText}
               onChange={(e) => setPayloadText(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-xs font-mono text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 resize-y leading-relaxed"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl p-4 text-xs font-mono text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-y leading-relaxed font-sans"
             />
           </div>
 
@@ -213,7 +220,7 @@ export default function PlaygroundPage() {
             <button
               onClick={handleSendRequest}
               disabled={loading}
-              className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs transition-colors flex items-center gap-2 shadow-lg shadow-violet-600/10"
+              className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs transition-colors flex items-center gap-2 shadow-md shadow-violet-600/20"
             >
               {loading ? (
                 <>
@@ -231,18 +238,18 @@ export default function PlaygroundPage() {
         </div>
 
         {/* Right: Response Inspector */}
-        <div className="rounded-2xl bg-zinc-900/70 border border-zinc-800 p-5 space-y-4 flex flex-col">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <div className="rounded-2xl bg-white dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800 p-5 space-y-4 flex flex-col shadow-sm dark:shadow-none transition-colors">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">
+              <span className="text-xs font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 font-semibold">
                 Response
               </span>
               {responseStatus !== null && (
                 <span
                   className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
                     responseStatus >= 200 && responseStatus < 300
-                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                      : "bg-rose-950 text-rose-400 border border-rose-800"
+                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
                   }`}
                 >
                   {responseStatus} {responseStatus === 200 ? "OK" : "ERROR"}
@@ -259,9 +266,9 @@ export default function PlaygroundPage() {
             {responseBody && (
               <button
                 onClick={handleCopyResponse}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 text-xs transition-colors flex items-center gap-1"
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs transition-colors flex items-center gap-1"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 <span className="text-[10px] font-mono">{copied ? "Copied" : "Copy"}</span>
               </button>
             )}
@@ -269,22 +276,22 @@ export default function PlaygroundPage() {
 
           {/* Response Headers if available */}
           {Object.keys(responseHeaders).length > 0 && (
-            <div className="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-850 text-[10px] font-mono space-y-1">
+            <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 text-[10px] font-mono space-y-1">
               {Object.entries(responseHeaders).map(([k, v]) => (
-                <div key={k} className="flex justify-between text-zinc-400">
+                <div key={k} className="flex justify-between text-zinc-600 dark:text-zinc-400">
                   <span className="text-zinc-500">{k}:</span>
-                  <span className="text-zinc-300 truncate max-w-[280px]">{v}</span>
+                  <span className="text-zinc-800 dark:text-zinc-300 truncate max-w-[280px]">{v}</span>
                 </div>
               ))}
             </div>
           )}
 
           {/* Response Body Viewer */}
-          <div className="flex-1 min-h-[300px] bg-zinc-950 border border-zinc-800 rounded-xl p-4 overflow-auto font-mono text-xs text-zinc-200">
+          <div className="flex-1 min-h-[300px] bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 overflow-auto font-mono text-xs text-zinc-900 dark:text-zinc-200">
             {responseBody ? (
               <pre className="whitespace-pre-wrap">{responseBody}</pre>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-600 text-center">
+              <div className="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 text-center">
                 <Terminal className="w-8 h-8 mb-2 opacity-50" />
                 <p className="text-xs">Click &quot;Send Request&quot; to inspect real response data and rate limit headers.</p>
               </div>

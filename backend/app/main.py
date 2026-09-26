@@ -16,10 +16,10 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# CORS middleware with strict allowlist
+# CORS middleware: universal cross-computer and internet access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

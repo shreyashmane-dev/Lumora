@@ -149,10 +149,13 @@ export async function analyzeWriting(text: string, apiKey?: string): Promise<Ana
   return data;
 }
 
-export async function createApiKey(name: string, environment: string = "live"): Promise<any> {
+export async function createApiKey(name: string, environment: string = "live", userId?: string): Promise<any> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (userId) headers["x-user-id"] = userId;
+
   const res = await fetch(`${API_BASE}/v1/keys`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ name, environment })
   });
   const data = await res.json();
@@ -162,8 +165,11 @@ export async function createApiKey(name: string, environment: string = "live"): 
   return data;
 }
 
-export async function listApiKeys(): Promise<KeyItem[]> {
-  const res = await fetch(`${API_BASE}/v1/keys`);
+export async function listApiKeys(userId?: string): Promise<KeyItem[]> {
+  const headers: Record<string, string> = {};
+  if (userId) headers["x-user-id"] = userId;
+
+  const res = await fetch(`${API_BASE}/v1/keys`, { headers });
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data?.error?.message || "Failed to fetch API keys.");
@@ -171,8 +177,11 @@ export async function listApiKeys(): Promise<KeyItem[]> {
   return data.keys || [];
 }
 
-export async function revokeApiKey(keyId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/v1/keys/${keyId}`, { method: "DELETE" });
+export async function revokeApiKey(keyId: string, userId?: string): Promise<void> {
+  const headers: Record<string, string> = {};
+  if (userId) headers["x-user-id"] = userId;
+
+  const res = await fetch(`${API_BASE}/v1/keys/${keyId}`, { method: "DELETE", headers });
   if (!res.ok) {
     const data = await res.json();
     throw new Error(data?.error?.message || "Failed to revoke API key.");

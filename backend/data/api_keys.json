@@ -1,0 +1,92 @@
+[
+  {
+    "id": "key_demo_default_1",
+    "name": "Default Development Key",
+    "hashed_key": "b4488ff6fb468f88e663d4a7431535afabe0f2c9c33a23a559aa93aa6ab151a7",
+    "prefix": "lum_live_dev...demo",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 0,
+    "is_active": true,
+    "created_at": "2026-09-26T12:50:02.598908+00:00",
+    "last_used_at": null,
+    "user_id": "dev_default_user",
+    "endpoint_usage": {
+      "/v1/detect": 0,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_9057975818d8",
+    "name": "Test Key Endpoint",
+    "hashed_key": "d4604f75ef030a2d99be74f16ab6234faa8ca360320f8659a4001f1621a4a68f",
+    "prefix": "lum_live_7ae...b46e",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 2,
+    "is_active": false,
+    "created_at": "2026-09-26T12:50:02.781107+00:00",
+    "last_used_at": "2026-09-26T12:50:02.794977+00:00",
+    "user_id": "dev_default_user",
+    "endpoint_usage": {
+      "/v1/detect": 2,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_bc0264d827ba",
+    "name": "Analytics Integration Key",
+    "hashed_key": "72a0e67b26d25d630306e8bde83c0d9e84f6ddfa11c1f7a94486b8cdd385195d",
+    "prefix": "lum_live_ece...af1f",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 1,
+    "is_active": false,
+    "created_at": "2026-09-26T12:50:02.827671+00:00",
+    "last_used_at": "2026-09-26T12:50:02.828447+00:00",
+    "user_id": "test_user_42",
+    "endpoint_usage": {
+      "/v1/detect": 1,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_d9f5439ca178",
+    "name": "Test Key Endpoint",
+    "hashed_key": "3689262c80c940a62fbde420ca40df9ad143132067448d60e86b3212569aae71",
+    "prefix": "lum_live_4bc...c8c6",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 2,
+    "is_active": false,
+    "created_at": "2026-09-26T13:00:45.180631+00:00",
+    "last_used_at": "2026-09-26T13:00:45.197312+00:00",
+    "user_id": "dev_default_user",
+    "endpoint_usage": {
+      "/v1/detect": 2,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_94a11cfe6470",
+    "name": "Analytics Integration Key",
+    "hashed_key": "5ff7aa919fc6f960af90efd57a005b30bd8d57e447016ec86721196a47265d55",
+    "prefix": "lum_live_7ca...7b4d",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 1,
+    "is_active": false,
+    "created_at": "2026-09-26T13:00:45.227568+00:00",
+    "last_used_at": "2026-09-26T13:00:45.228310+00:00",
+    "user_id": "test_user_42",
+    "endpoint_usage": {
+      "/v1/detect": 1,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  }
+]
