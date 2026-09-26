@@ -10,14 +10,13 @@ export function ThemeToggle() {
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("lumora_theme") as "dark" | "light" | null;
-    if (saved) {
-      setTheme(saved);
-      if (saved === "light") {
-        document.documentElement.classList.remove("dark");
-      } else {
-        document.documentElement.classList.add("dark");
-      }
+    const initialTheme = saved || "dark";
+    setTheme(initialTheme);
+    if (initialTheme === "light") {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
     } else {
+      document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
     }
   }, []);
@@ -28,28 +27,30 @@ export function ThemeToggle() {
     localStorage.setItem("lumora_theme", next);
     if (next === "light") {
       document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
     } else {
+      document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
     }
   };
 
   if (!mounted) {
     return (
-      <div className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900/50" />
+      <div className="w-9 h-9 rounded-xl border border-slate-800 bg-slate-900/60" />
     );
   }
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-center"
+      className="p-2 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all flex items-center justify-center shadow-sm"
       aria-label="Toggle dark/light theme"
       title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
     >
       {theme === "dark" ? (
         <Sun className="w-4 h-4 text-amber-400" />
       ) : (
-        <Moon className="w-4 h-4 text-violet-600" />
+        <Moon className="w-4 h-4 text-violet-400" />
       )}
     </button>
   );

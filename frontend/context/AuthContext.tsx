@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth, isFirebaseConfigured } from "@/lib/firebase";
+import { auth, db, isFirebaseConfigured } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -11,11 +11,14 @@ import {
   signInWithPopup,
   User as FirebaseUser
 } from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export interface UserProfile {
   uid: string;
   email: string | null;
   displayName: string | null;
+  monthlyQuota?: number;
+  role?: string;
   isDemo?: boolean;
 }
 
@@ -35,6 +38,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Sync or create user profile in Firestore
+  const syncUserToFirestore = async (fbUser: FirebaseUser): Promise<UserProfile> => {
+    let profile: UserProfile = {
+      uid: fbUser.uid,
+      email: fbUser.email,
+      displayName: fbUser.displayName || fbUser.email?.split("@")[0] || "Developer",
+      monthlyQuota: 10000,
+      role: "developer",
+      isDemo: false
+    };
+
+    if (db) {
+      try {
+        const userRef = doc(db, "users", fbUser.uid);
+        const snapshot = await getDoc(userRef);
+        if (!snapshot.exists()) {
+          await setDoc(userRef, {
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: profile.displayName,
+            monthlyQuota: 10000,
+            role: "developer",
+            createdAt: serverTimestamp()
+          });
+        } else {
+          const data = snapshot.data();
+          profile.monthlyQuota = data?.monthlyQuota || 10000;
+          profile.role = data?.role || "developer";
+        }
+      } catch (e) {
+        console.warn("[AuthContext] Firestore sync notice (non-fatal):", e);
+      }
+    }
+
+    return profile;
+  };
+
   useEffect(() => {
     // Check local storage for persistent guest/demo session
     const savedUser = localStorage.getItem("lumora_user");
@@ -46,15 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    if (isFirebaseConfigured && auth) {
-      const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
         if (fbUser) {
-          const profile: UserProfile = {
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName || fbUser.email?.split("@")[0] || "Developer",
-            isDemo: false
-          };
+          const profile = await syncUserToFirestore(fbUser);
           setUser(profile);
           localStorage.setItem("lumora_user", JSON.stringify(profile));
         } else if (!savedUser) {
@@ -70,16 +105,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, pass: string) => {
-    if (isFirebaseConfigured && auth) {
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      const profile: UserProfile = {
-        uid: cred.user.uid,
-        email: cred.user.email,
-        displayName: cred.user.displayName || email.split("@")[0],
-        isDemo: false
-      };
-      setUser(profile);
-      localStorage.setItem("lumora_user", JSON.stringify(profile));
+    if (auth) {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, pass);
+        const profile = await syncUserToFirestore(cred.user);
+        setUser(profile);
+        localStorage.setItem("lumora_user", JSON.stringify(profile));
+      } catch (err: any) {
+        // Humanize common Firebase auth error codes
+        if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+          throw new Error("Invalid email or password. If you are new, please click 'Create Account' above.");
+        } else if (err.code === "auth/too-many-requests") {
+          throw new Error("Too many unsuccessful login attempts. Please try again later or use Instant Demo Login.");
+        } else if (err.code === "auth/network-request-failed") {
+          throw new Error("Network request failed. Please check your internet connection.");
+        }
+        throw err;
+      }
     } else {
       // Local dev session
       const profile: UserProfile = {
@@ -94,33 +136,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signup = async (email: string, pass: string) => {
-    if (isFirebaseConfigured && auth) {
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      const profile: UserProfile = {
-        uid: cred.user.uid,
-        email: cred.user.email,
-        displayName: email.split("@")[0],
-        isDemo: false
-      };
-      setUser(profile);
-      localStorage.setItem("lumora_user", JSON.stringify(profile));
+    if (auth) {
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        const profile = await syncUserToFirestore(cred.user);
+        setUser(profile);
+        localStorage.setItem("lumora_user", JSON.stringify(profile));
+      } catch (err: any) {
+        if (err.code === "auth/email-already-in-use") {
+          throw new Error("This email is already registered. Please sign in or use a different email.");
+        } else if (err.code === "auth/weak-password") {
+          throw new Error("Password must be at least 6 characters long.");
+        }
+        throw err;
+      }
     } else {
       await login(email, pass);
     }
   };
 
   const loginWithGoogle = async () => {
-    if (isFirebaseConfigured && auth) {
-      const provider = new GoogleAuthProvider();
-      const cred = await signInWithPopup(auth, provider);
-      const profile: UserProfile = {
-        uid: cred.user.uid,
-        email: cred.user.email,
-        displayName: cred.user.displayName || "Google Developer",
-        isDemo: false
-      };
-      setUser(profile);
-      localStorage.setItem("lumora_user", JSON.stringify(profile));
+    if (auth) {
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        const cred = await signInWithPopup(auth, provider);
+        const profile = await syncUserToFirestore(cred.user);
+        setUser(profile);
+        localStorage.setItem("lumora_user", JSON.stringify(profile));
+      } catch (err: any) {
+        if (err.code === "auth/popup-closed-by-user") {
+          throw new Error("Google sign-in popup was closed before completion.");
+        }
+        throw err;
+      }
     } else {
       loginAsDemo();
     }
@@ -130,7 +179,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const profile: UserProfile = {
       uid: "dev_default_user",
       email: "developer@lumora.ai",
-      displayName: "Pro Developer",
+      displayName: "Pro Developer (Demo)",
+      monthlyQuota: 10000,
+      role: "developer",
       isDemo: true
     };
     setUser(profile);
@@ -138,8 +189,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    if (isFirebaseConfigured && auth) {
-      await signOut(auth);
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.error(e);
+      }
     }
     setUser(null);
     localStorage.removeItem("lumora_user");

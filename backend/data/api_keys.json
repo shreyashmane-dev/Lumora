@@ -88,5 +88,41 @@
       "/v1/humanize": 0,
       "/v1/analyze": 0
     }
+  },
+  {
+    "id": "key_4d6432ce63ef",
+    "name": "Test Key Endpoint",
+    "hashed_key": "5d1d83b13a85ba5eff5ede42ac57514a5f289406d7471d86216597bf8ffb05e3",
+    "prefix": "lum_live_c96...02a6",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 2,
+    "is_active": false,
+    "created_at": "2026-09-26T13:27:14.790469+00:00",
+    "last_used_at": "2026-09-26T13:27:14.808072+00:00",
+    "user_id": "dev_default_user",
+    "endpoint_usage": {
+      "/v1/detect": 2,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_f2d0028b1880",
+    "name": "Analytics Integration Key",
+    "hashed_key": "1e5b3c66db27a17c8c1dad1a89786e51fb3177116e06bb7576e63fe889d592a6",
+    "prefix": "lum_live_41a...314b",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 1,
+    "is_active": false,
+    "created_at": "2026-09-26T13:27:14.844440+00:00",
+    "last_used_at": "2026-09-26T13:27:14.845404+00:00",
+    "user_id": "test_user_42",
+    "endpoint_usage": {
+      "/v1/detect": 1,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
   }
 ]

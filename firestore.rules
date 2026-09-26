@@ -2,7 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -11,26 +13,86 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User accounts and developer metadata
+    // ==========================================
+    // 1. USER PROFILES & RATE LIMIT DATA
+    // Only stores crucial identity & quota limits
+    // ==========================================
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // API Keys metadata (only hashed keys stored; never raw secrets)
-    match /api_keys/{keyId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-    }
-
-    // Usage and quota summaries
-    match /usage_summaries/{userId} {
+      // User can read their own profile and limit
       allow read: if isOwner(userId);
-      allow write: if false; // Only backend service account can increment usage quotas
+
+      // User can create their initial profile (max 10,000 monthly quota on free tier)
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasAll(['uid', 'email'])
+        && request.resource.data.uid == userId
+        && (!('monthlyQuota' in request.resource.data) || request.resource.data.monthlyQuota <= 10000);
+
+      // User can update non-sensitive profile info, but CANNOT elevate their monthlyQuota limit
+      allow update: if isOwner(userId)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['monthlyQuota', 'role']));
+
+      allow delete: if false; // Accounts must be deactivated through admin/support
     }
 
-    // Default deny all other paths
+    // ==========================================
+    // 2. API KEYS COLLECTION (Nested under User)
+    // /users/{userId}/api_keys/{keyId}
+    // ==========================================
+    match /users/{userId}/api_keys/{keyId} {
+      allow read: if isOwner(userId);
+
+      // Create new key:
+      // STRICT RULE: Plaintext raw keys must NEVER be stored in the database.
+      // Must contain hashed_key, prefix, environment, name, and is_active.
+      allow create: if isOwner(userId)
+        && !('raw_key' in request.resource.data)
+        && !('secret' in request.resource.data)
+        && request.resource.data.keys().hasAll(['name', 'prefix', 'hashed_key', 'environment', 'is_active'])
+        && request.resource.data.environment in ['live', 'test']
+        && (!('monthly_quota' in request.resource.data) || request.resource.data.monthly_quota <= 10000);
+
+      // Update: User can revoke key (is_active: false) or update label,
+      // but cannot alter hashed_key or artificially change quota
+      allow update: if isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['hashed_key', 'monthly_quota']);
+
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================
+    // 3. ROOT API KEYS COLLECTION (Cross-index)
+    // /api_keys/{keyId}
+    // ==========================================
+    match /api_keys/{keyId} {
+      allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+
+      allow create: if isAuthenticated()
+        && request.resource.data.user_id == request.auth.uid
+        && !('raw_key' in request.resource.data)
+        && !('secret' in request.resource.data)
+        && request.resource.data.keys().hasAll(['name', 'prefix', 'hashed_key', 'environment', 'is_active', 'user_id'])
+        && request.resource.data.environment in ['live', 'test'];
+
+      allow update: if isAuthenticated()
+        && resource.data.user_id == request.auth.uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['hashed_key', 'monthly_quota', 'user_id']);
+
+      allow delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+    }
+
+    // ==========================================
+    // 4. USAGE & QUOTA TELEMETRY
+    // /usage/{userId}
+    // ==========================================
+    match /usage/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only backend service account can increment usage telemetry
+    }
+
+    // ==========================================
+    // 5. DEFAULT DENY
+    // Block all other documents by default
+    // ==========================================
     match /{document=**} {
       allow read, write: if false;
     }

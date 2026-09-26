@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Key, Lock, Mail, ArrowRight, ShieldCheck, Zap, RefreshCw } from "lucide-react";
+import { Sparkles, Key, Lock, Mail, ArrowRight, ShieldCheck, Zap, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithGoogle, loginAsDemo } = useAuth();
+  const { login, signup, loginWithGoogle, loginAsDemo } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,10 +21,14 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      if (isSignUp) {
+        await signup(email, password);
+      } else {
+        await login(email, password);
+      }
+      router.push("/dashboard/api-keys");
     } catch (err: any) {
-      setError(err?.message || "Invalid email or password.");
+      setError(err?.message || "Authentication failed. Please verify credentials or use Instant Access.");
     } finally {
       setLoading(false);
     }
@@ -31,132 +36,182 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     setError(null);
+    setLoading(true);
     try {
       await loginWithGoogle();
-      router.push("/dashboard");
+      router.push("/dashboard/api-keys");
     } catch (err: any) {
-      setError(err?.message || "Google sign-in failed.");
+      setError(err?.message || "Google sign-in could not be completed.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDemo = () => {
     loginAsDemo();
-    router.push("/dashboard");
+    router.push("/dashboard/api-keys");
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-violet-600/15 border border-violet-500/30 text-violet-400 mb-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-500/40 text-violet-400 mb-2 shadow-lg shadow-violet-600/10">
             <Key className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            Developer Sign In
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            {isSignUp ? "Create Developer Account" : "Developer Sign In"}
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-            Access your API keys, monitor usage quotas, and test in the playground.
+          <p className="text-xs sm:text-sm text-slate-400">
+            {isSignUp
+              ? "Register to receive a persistent API key and 10,000 monthly free requests."
+              : "Manage API keys, track quota consumption, and access the live playground."}
           </p>
         </div>
 
         {/* Demo Mode Quick Access Button */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-950/40 via-purple-950/30 to-indigo-950/40 border border-violet-500/40 text-center space-y-2.5">
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-950/50 via-slate-900 to-indigo-950/50 border border-violet-500/40 text-center space-y-2.5 shadow-lg">
           <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-violet-300">
             <Zap className="w-4 h-4 text-violet-400" />
-            <span>Instant Developer Access</span>
+            <span>Instant Developer Access (Zero Setup)</span>
           </div>
-          <p className="text-[11px] text-zinc-400">
-            No password required. Jump straight into the Developer Console with pre-seeded test keys.
+          <p className="text-[11px] text-slate-400">
+            No signup or password needed. Jump straight into the portal with pre-loaded demo credentials.
           </p>
           <button
             onClick={handleDemo}
-            className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-600/20"
+            className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-violet-600/25"
           >
-            <span>Enter Developer Console (Instant Access)</span>
+            <span>Launch Developer Console Now</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Form Card */}
-        <div className="rounded-2xl bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 p-6 space-y-5 shadow-xl">
+        <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-6 space-y-5 shadow-2xl backdrop-blur-md">
+          {/* Mode Tabs */}
+          <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(false);
+                setError(null);
+              }}
+              className={`py-2 rounded-lg transition-all ${
+                !isSignUp ? "bg-violet-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(true);
+                setError(null);
+              }}
+              className={`py-2 rounded-lg transition-all ${
+                isSignUp ? "bg-violet-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">
-                Email Address
+              <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5">
+                Developer Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-3 text-zinc-400" />
+                <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="developer@example.com"
+                  placeholder="developer@domain.com"
                   required
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">
+              <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-3 text-zinc-400" />
+                <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
                   required
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                  minLength={6}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-950/30 border border-red-800/40 text-red-300 text-xs">
-                {error}
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-900 font-medium text-xs transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-violet-600/20"
             >
               {loading ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Signing In...</span>
+                  <span>Authenticating...</span>
                 </>
               ) : (
-                <span>Sign In with Email</span>
+                <span>{isSignUp ? "Create Developer Account" : "Sign In to Console"}</span>
               )}
             </button>
           </form>
 
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-zinc-200 dark:border-zinc-800 w-full" />
-            <span className="bg-white dark:bg-zinc-900 px-3 text-[10px] uppercase font-mono text-zinc-400 shrink-0">
-              Or
-            </span>
+          {/* Social OAuth */}
+          <div className="relative pt-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-800"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-2 bg-slate-900 text-slate-500">Or continue with</span>
+            </div>
           </div>
 
           <button
             onClick={handleGoogle}
-            className="w-full py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-950 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-xs font-medium transition-colors flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800/60 text-slate-200 font-medium text-xs transition-colors flex items-center justify-center gap-2"
           >
-            <span>Continue with Google</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+            <span>Sign in with Google</span>
           </button>
-
-          <div className="text-center text-xs text-zinc-500 pt-2">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-violet-500 hover:underline font-medium">
-              Create Account
-            </Link>
-          </div>
         </div>
       </div>
     </div>
