@@ -103,6 +103,44 @@ CLICHE_REPLACEMENTS: Dict[str, Dict[str, str]] = {
         r"\bfurthermore\b": "beyond that,",
         r"\bplays\s+a\s+crucial\s+role\s+in\b": "is vital for",
         r"\bseamlessly\b": "effortlessly"
+    },
+    "executive": {
+        r"\bdelve(?:s|d|ing)?\s+into\b": "target",
+        r"\btapestry(?:\s+of)?\b": "portfolio of",
+        r"\btestament\s+to\b": "validation of",
+        r"\bit\s+is\s+important\s+to\s+note\s+that\b": "critical priority:",
+        r"\bin\s+conclusion\b": "strategic takeaway:",
+        r"\bfurthermore\b": "in addition,",
+        r"\bplays\s+a\s+(?:vital|crucial|pivotal|key)\s+role\s+in\b": "drives",
+        r"\bnavigat(?:e|ing)\s+the\s+complexit(?:y|ies)\s+of\b": "executing through",
+        r"\bmultifaceted\b": "cross-functional",
+        r"\bseamlessly\b": "efficiently",
+        r"\bharness(?:ing)?\s+the\s+power\s+of\b": "capitalizing on"
+    },
+    "creative": {
+        r"\bdelve(?:s|d|ing)?\s+into\b": "wander into",
+        r"\btapestry(?:\s+of)?\b": "mosaic of",
+        r"\btestament\s+to\b": "monument to",
+        r"\bit\s+is\s+important\s+to\s+note\s+that\b": "noticeably,",
+        r"\bin\s+conclusion\b": "at the close of it all,",
+        r"\bfurthermore\b": "what is more,",
+        r"\bmoreover\b": "and still,",
+        r"\bplays\s+a\s+crucial\s+role\s+in\b": "breathes life into",
+        r"\bnavigating\b": "steering through",
+        r"\bseamlessly\b": "like second nature",
+        r"\bintricate\b": "delicate"
+    },
+    "journalistic": {
+        r"\bdelve(?:s|d|ing)?\s+into\b": "investigate",
+        r"\btapestry(?:\s+of)?\b": "spectrum of",
+        r"\btestament\s+to\b": "evidence of",
+        r"\bit\s+is\s+important\s+to\s+note\s+that\b": "notably,",
+        r"\bin\s+conclusion\b": "the central outcome is that",
+        r"\bfurthermore\b": "meanwhile,",
+        r"\bmoreover\b": "additionally,",
+        r"\bplays\s+a\s+crucial\s+role\s+in\b": "serves as a primary catalyst for",
+        r"\bnavigating\b": "addressing",
+        r"\bseamlessly\b": "smoothly"
     }
 }
 
