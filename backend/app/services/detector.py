@@ -183,7 +183,6 @@ def calculate_marker_perplexity(text: str, total_words: int, sentences: List[str
     Returns: (perplexity_proxy telemetry, ai_marker_probability)
     """
     matches = sum(len(re.findall(p, text, re.IGNORECASE)) for p in AI_MARKER_PATTERNS)
-    marker_rate = (matches / max(1, total_words)) * 100
 
     # Detect tripartite 'Rule of Three' constructions common in LLMs (e.g., 'A, B, and C')
     rule_of_three = len(re.findall(r'\b[\w\s]{3,30},\s+[\w\s]{3,30},\s+and\s+[\w\s]{3,30}\b', text, re.IGNORECASE))
@@ -192,14 +191,23 @@ def calculate_marker_perplexity(text: str, total_words: int, sentences: List[str
     openers = sum(1 for s in sentences if re.match(r'^(?:[A-Z][a-z]+ing\b|Ultimately,|In parallel,|Furthermore,|Moreover,|Additionally,)', s))
     opener_ratio = openers / max(1, len(sentences))
 
-    # Telemetry: 0.05 (heavy AI clichés) to 0.98 (original phrasing)
-    perplexity_proxy = max(0.05, min(0.98, 1.0 - (marker_rate / 1.5)))
+    # Perplexity proxy telemetry: 0.05 (heavy AI clichés) to 0.98 (original phrasing)
+    perplexity_proxy = max(0.05, min(0.98, 1.0 - (matches * 0.20)))
 
-    ai_marker_prob = min(1.0, (marker_rate / 1.5) * 0.55 + (rule_of_three * 0.20) + (opener_ratio * 0.25))
-    if matches >= 2:
-        ai_marker_prob = max(0.72, ai_marker_prob)
-    if matches >= 4:
-        ai_marker_prob = max(0.92, ai_marker_prob)
+    # Calibrate base probability by match frequency
+    if matches == 0:
+        base_marker_prob = 0.08
+    elif matches == 1:
+        base_marker_prob = 0.22
+    elif matches == 2:
+        base_marker_prob = 0.48
+    elif matches == 3:
+        base_marker_prob = 0.72
+    else:
+        base_marker_prob = 0.92
+
+    ai_marker_prob = (base_marker_prob * 0.65) + (min(1.0, rule_of_three * 0.15)) + (min(1.0, opener_ratio * 0.20))
+    ai_marker_prob = round(max(0.04, min(0.98, ai_marker_prob)), 3)
 
     return round(perplexity_proxy, 3), ai_marker_prob
 
@@ -349,13 +357,12 @@ class DetectorService:
         calibrated_prob = max(0.02, min(0.98, calibrated_prob))
 
         # 4. Confidence Policy
-        length_factor = min(1.0, word_count / 120.0)
+        length_factor = min(1.0, word_count / 100.0)
         certainty_dist = abs(calibrated_prob - 0.50) * 2.0
-        confidence = (length_factor * 0.50) + (certainty_dist * 0.50)
-        confidence = max(0.20, min(0.98, confidence))
+        confidence = (length_factor * 0.40) + (certainty_dist * 0.60)
+        confidence = max(0.25, min(0.98, confidence))
 
         # 5. Sentence-Level Breakdown with Bayesian Prior Smoothing
-        # Instead of evaluating sentences in a vacuum, incorporate the document-level prior
         sentence_analysis: List[SentenceSignal] = []
         prior_bias = calibrated_prob * 0.35
 
@@ -405,7 +412,7 @@ class DetectorService:
             )
 
         # 6. Classification Decision
-        if confidence < 0.42 or (0.42 <= calibrated_prob <= 0.58):
+        if confidence < 0.28 or (0.44 <= calibrated_prob <= 0.56):
             classification = "Uncertain / Mixed"
             is_uncertain = True
             evaluation_summary = (
@@ -413,7 +420,7 @@ class DetectorService:
                 "Syntactic cadence and vocabulary breadth fall within ambiguous bounds. "
                 "This commonly occurs in human-edited drafts, formal technical reports, or non-native English prose."
             )
-        elif calibrated_prob >= 0.59:
+        elif calibrated_prob >= 0.57:
             classification = "Likely AI-Generated"
             is_uncertain = False
             evaluation_summary = (

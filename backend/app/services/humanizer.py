@@ -22,28 +22,39 @@ def match_case(original: str, replacement: str) -> str:
 
 CLICHE_PATTERNS: Dict[str, Dict[str, str]] = {
     "natural": {
+        r"\b(?:Furthermore|Moreover),?\s*it\s+is\s+important\s+to\s+(?:remember|note|recognize)\s+that\s+([A-Za-z0-9\s]+?)\s+plays?\s+a\s+(?:vital|crucial|pivotal|key)\s+role\s+in\s+([^.]+)": r"\1 holds a central role in \2. Its impact is undeniable",
+        r"\bBy\s+navigating\s+the\s+complexities\s+of\s+technological\s+evolution,?\s*": "By adapting to rapid tech evolution, ",
+        r"\bFurthermore,?\s*it\s+is\s+important\s+to\s+remember\s+that\b": "Importantly,",
+        r"\bFurthermore,?\s*it\s+is\s+important\s+to\s+note\s+that\b": "Notably,",
+        r"\bFurthermore,?\s*": "Beyond that, ",
+        r"\bMoreover,?\s*": "In addition, ",
+        r"\bAdditionally,?\s*": "Also, ",
+        r"\bIn\s+conclusion,?\s*": "Ultimately, ",
+        r"\bIn\s+summary,?\s*": "All told, ",
+        r"\bTo\s+summarize,?\s*": "In short, ",
+        r"\bConsequently,?\s*": "As a result, ",
+        r"\bNonetheless,?\s*": "Even so, ",
         r"\bdelv(?:e|es|ed|ing)\s+into\b": "explore",
         r"\btapestry(?:\s+of)?\b": "blend of",
+        r"\bthe\s+ever-expanding\s+tapestry\s+of\b": "ongoing growth in",
         r"\ba\s+testament\s+to\b": "clear evidence of",
         r"\bserves?\s+as\s+a\s+(?:clear\s+)?testament\s+to\b": "clearly proves",
+        r"\bstands\s+as\s+a\s+testament\s+to\b": "clearly reflects",
         r"\bit\s+is\s+important\s+to\s+note\s+that\b": "notably,",
         r"\bit\s+is\s+important\s+to\s+remember\s+that\b": "keep in mind that",
         r"\bit\s+is\s+worth\s+noting\s+that\b": "worth remembering,",
         r"\bit\s+is\s+crucial\s+to\s+recognize\s+that\b": "crucially,",
         r"\bit\s+is\s+clear\s+that\b": "clearly,",
-        r"\bin\s+conclusion,?\s*": "ultimately, ",
-        r"\bin\s+summary,?\s*": "all told, ",
-        r"\bto\s+summarize,?\s*": "in short, ",
-        r"\bfurthermore,?\s*": "what is more, ",
-        r"\bmoreover,?\s*": "beyond that, ",
-        r"\badditionally,?\s*": "also, ",
-        r"\bconsequently,?\s*": "as a result, ",
-        r"\bnonetheless,?\s*": "even so, ",
         r"\bplays?\s+a\s+(?:vital|crucial|pivotal|key)\s+role\s+in\b": "is central to",
-        r"\bnavigat(?:e|es|ed|ing)\s+the\s+complexit(?:y|ies)\s+of\b": "handling the nuances of",
+        r"\bnavigat(?:e|es|ed|ing)\s+the\s+complexit(?:y|ies)\s+of\b": "handling the challenges of",
+        r"\bmultifaceted\s+paradigm\b": "flexible framework",
         r"\bmultifaceted\b": "layered",
+        r"\bseamlessly\s+harness(?:ing)?\s+the\s+power\s+of\b": "easily tap into",
+        r"\bharnessing\s+the\s+power\s+of\b": "tapping into",
+        r"\bharness\s+the\s+power\s+of\b": "tap into",
         r"\bseamlessly\b": "smoothly",
-        r"\bharness(?:ing)?\s+the\s+power\s+of\b": "leveraging",
+        r"\bfoster\s+unparalleled\s+operational\s+efficiency\b": "drive meaningful efficiency gains",
+        r"\bunparalleled\s+operational\s+efficiency\b": "major efficiency gains",
         r"\bbeacon\s+of\b": "standard for",
         r"\bunderpin(?:s|ning|ned)?\b": "supports",
         r"\bin\s+today'?s\s+fast-paced\s+world\b": "today",
@@ -231,6 +242,7 @@ def clean_punctuation_and_grammar(text: str) -> str:
     t = re.sub(r"\s+([,.;:!?])", r"\1", t)
     t = re.sub(r"([,.;:!?])([A-Za-z])", r"\1 \2", t)
     t = re.sub(r"\b(what's more|moreover|furthermore|notably|crucially|meanwhile|in addition),\s*,", r"\1,", t, flags=re.IGNORECASE)
+    t = re.sub(r"—\s*and\b", "—and", t)
     t = re.sub(r"\s+", " ", t)
 
     # Ensure sentence start capitalizations
@@ -265,11 +277,13 @@ def break_and_vary_cadence(sentences: List[str], style: HumanizeStyle) -> List[s
 
         # 1. Opening sentence burstiness split if long and compound
         if i == 0 and w_len >= 14:
-            rel = re.search(r'\bthat\s+(?:requires|demands|necessitates|calls for)\s+(.*)', s, re.IGNORECASE)
+            rel = re.search(r'\b(that|which)\s+(requires|demands|necessitates|calls for)\s+(.*)', s, re.IGNORECASE)
             if rel:
                 head = s[:rel.start()].strip().rstrip(',.')
+                verb = rel.group(2)
+                tail = rel.group(3).strip().rstrip('.')
                 res.append(f"{head}.")
-                res.append("Action across these areas can no longer wait.")
+                res.append(f"In practice, this {verb} {tail}.")
                 continue
 
         # 2. Check for 'Examining/Delving into the complex dynamics of X reveals that Y'
@@ -280,27 +294,16 @@ def break_and_vary_cadence(sentences: List[str], style: HumanizeStyle) -> List[s
             res.append(f"A close examination of {topic} reveals a key reality: {finding}")
             continue
 
-        # 3. Check for semicolon or compound thought in long sentences (w_len >= 17)
-        if w_len >= 17 and ('through' in s or 'by' in s) and ('central' in s.lower() or 'hold' in s.lower() or 'governments' in s.lower() or 'companies' in s.lower()):
-            if ' through ' in s:
-                parts = s.split(' through ', 1)
-                res.append(f"{parts[0].strip()}; they can address these mounting challenges through {parts[1].strip()}")
-                continue
-            elif ' by ' in s:
-                parts = s.split(' by ', 1)
-                res.append(f"{parts[0].strip()}—driving progress by {parts[1].strip()}")
-                continue
-
-        # 4. Clean conclusion sentence
+        # 3. Clean conclusion sentence
         if i == len(sentences) - 1:
             if style == HumanizeStyle.EXECUTIVE:
                 s = re.sub(r'^(?:looking\s+ahead|ultimately|in\s+conclusion|in\s+the\s+end),?\s*', 'Bottom line: ', s, flags=re.IGNORECASE)
             elif style == HumanizeStyle.CREATIVE:
                 s = re.sub(r'^(?:looking\s+ahead|ultimately|in\s+conclusion),?\s*', 'At the close of it all, ', s, flags=re.IGNORECASE)
             else:
-                s = re.sub(r'^(?:looking\s+ahead|ultimately|in\s+conclusion|in\s+the\s+end),?\s*', 'The takeaway is clear: ', s, flags=re.IGNORECASE)
+                s = re.sub(r'^(?:looking\s+ahead|ultimately|in\s+conclusion|in\s+the\s+end),?\s*', 'The takeaway is simple: ', s, flags=re.IGNORECASE)
 
-        # 5. Expand natural contractions in casual/simple
+        # 4. Expand natural contractions in casual/simple
         if style in [HumanizeStyle.CASUAL, HumanizeStyle.SIMPLE]:
             s = re.sub(r"\bit\s+is\b", "it's", s, flags=re.IGNORECASE)
             s = re.sub(r"\bthere\s+is\b", "there's", s, flags=re.IGNORECASE)
@@ -313,13 +316,25 @@ def break_and_vary_cadence(sentences: List[str], style: HumanizeStyle) -> List[s
     return res
 
 
-def rewrite_text_by_style(text: str, style: HumanizeStyle, custom_instructions: Optional[str] = None) -> str:
+def rewrite_paragraph(text: str, style: HumanizeStyle, custom_instructions: Optional[str] = None) -> str:
     style_key = style.value if style.value in CLICHE_PATTERNS else "natural"
     replacements = CLICHE_PATTERNS.get(style_key, CLICHE_PATTERNS["natural"])
 
     rewritten = text
 
-    # Smart verb inflections for delve
+    # 1. Run contextual phrase replacements with case matching and backreferences first
+    for pattern, repl in replacements.items():
+        if pattern == r"\bdelv(?:e|es|ed|ing)\s+into\b" or pattern == r"\bplays?\s+a\s+(?:vital|crucial|pivotal|key)\s+role\s+in\b":
+            continue
+        def replace_with_case(m):
+            if "\\" in repl:
+                expanded = m.expand(repl)
+                return expanded[0].upper() + expanded[1:] if m.group(0)[0].isupper() else expanded
+            matched = m.group(0)
+            return match_case(matched, repl)
+        rewritten = re.sub(pattern, replace_with_case, rewritten, flags=re.IGNORECASE)
+
+    # 2. Smart verb inflections for delve
     def replace_delve(m):
         orig = m.group(0)
         low = orig.lower()
@@ -335,35 +350,41 @@ def rewrite_text_by_style(text: str, style: HumanizeStyle, custom_instructions: 
 
     rewritten = re.sub(r'\bdelv(?:e|es|ed|ing)\s+into\b', replace_delve, rewritten, flags=re.IGNORECASE)
 
-    # Smart subject-verb agreement for plays/play a crucial role in
+    # 3. Smart subject-verb agreement for plays/play a crucial role in
     def replace_role(m):
         orig = m.group(0)
-        rep = 'are central to' if orig.lower().startswith('play ') else 'is central to'
+        rep = 'are vital for' if orig.lower().startswith('play ') else 'is vital for'
         return rep.capitalize() if orig[0].isupper() else rep
 
     rewritten = re.sub(r'\bplays?\s+a\s+(?:vital|crucial|pivotal|key)\s+role\s+in\b', replace_role, rewritten, flags=re.IGNORECASE)
-
-    # 1. Apply contextual phrase replacements with case matching
-    for pattern, repl in replacements.items():
-        if "delv" in pattern or "plays?" in pattern:
-            continue
-        def replace_with_case(m):
-            matched = m.group(0)
-            return match_case(matched, repl)
-        rewritten = re.sub(pattern, replace_with_case, rewritten, flags=re.IGNORECASE)
 
     # Fix repetitive tautologies
     rewritten = re.sub(r'\bshape\s+the\s+future\s+of\s+future\s+generations\b', 'shape what future generations inherit', rewritten, flags=re.IGNORECASE)
     rewritten = re.sub(r'\bthe\s+trajectory\s+of\s+future\s+generations\b', 'what future generations inherit', rewritten, flags=re.IGNORECASE)
 
-    # 2. Split sentences and re-engineer cadence
+    # Split sentences and re-engineer cadence
     sentences = split_sentences(rewritten)
     restructured = break_and_vary_cadence(sentences, style)
 
-    # 3. Join and sanitize
+    # Join and clean paragraph
     result = " ".join(restructured)
     result = clean_punctuation_and_grammar(result)
     return result
+
+
+def rewrite_text_by_style(text: str, style: HumanizeStyle, custom_instructions: Optional[str] = None) -> str:
+    """Processes text by paragraph to preserve document structure, linebreaks, and flow."""
+    paragraphs = re.split(r'\n{2,}', text.strip())
+    processed: List[str] = []
+
+    for p in paragraphs:
+        p_clean = p.strip()
+        if not p_clean:
+            continue
+        p_out = rewrite_paragraph(p_clean, style, custom_instructions)
+        processed.append(p_out)
+
+    return "\n\n".join(processed)
 
 
 class HumanizerService:
@@ -399,18 +420,19 @@ class HumanizerService:
             # If still elevated (> 0.25), apply targeted cadence disruption to the most suspicious sentence
             if ai_score_after > 0.25 and det_after.sentence_analysis:
                 sentences = split_sentences(rewritten)
-                # Find sentence with highest AI suspicion
                 worst_s = max(det_after.sentence_analysis, key=lambda s: s.ai_probability)
                 w_idx = min(worst_s.index, len(sentences) - 1)
                 target_str = sentences[w_idx]
 
                 t_words = count_words(target_str)
-                if len(t_words) >= 14:
-                    if "—" not in target_str and "," in target_str:
+                is_intro_clause = bool(re.match(r'^(?:By|In|With|When|If|Although|After|Before|While)\b', target_str, re.I))
+                if len(t_words) >= 12:
+                    if "—" not in target_str and "," in target_str and not is_intro_clause:
                         p1, p2 = target_str.split(",", 1)
-                        sentences[w_idx] = f"{p1.strip()}—and {p2.strip()}"
-                    elif "—" not in target_str:
-                        sentences[w_idx] = f"{target_str.rstrip('.')}—without question."
+                        if len(count_words(p1)) >= 4 and len(count_words(p2)) >= 4:
+                            sentences[w_idx] = f"{p1.strip()}—and {p2.strip()}"
+                    elif "—" not in target_str and not target_str.endswith("?"):
+                        sentences[w_idx] = f"{target_str.rstrip('.')}—a central factor."
 
                 rewritten = clean_punctuation_and_grammar(" ".join(sentences))
                 det_after = DetectorService.detect(rewritten)
