@@ -6,7 +6,7 @@ from app.core.config import settings
 from app.core.errors import TextTooShortException, TextTooLargeException
 from app.models.detect import DetectResponse, SentenceSignal, EvidenceSignals
 
-# Expanded catalog of 80+ modern LLM markers, clichés, robotic transitions, and stylistic tropes
+# Expanded catalog of 120+ modern LLM markers, clichés, robotic transitions, and stylistic tropes
 AI_MARKER_PATTERNS = [
     # Metaphors, Cliches & Rhetorical Crutches
     r"\bdelve(?:s|d|ing)?\s+into\b",
@@ -14,6 +14,7 @@ AI_MARKER_PATTERNS = [
     r"\btestament\s+to\b",
     r"\bstands?\s+as\s+a\s+testament\b",
     r"\bbeacon\s+of\b",
+    r"\bshining\s+beacon\b",
     r"\bmultifaceted(?:\s+nature|\s+approach)?\b",
     r"\bpivotal\s+role\b",
     r"\bcrucial\s+role\b",
@@ -21,6 +22,7 @@ AI_MARKER_PATTERNS = [
     r"\bessential\s+(?:part|role)\b",
     r"\bplays?\s+a\s+(?:key|vital|crucial|pivotal|fundamental|critical|significant)\s+(?:role|part)\b",
     r"\bnavigat(?:e|ing|ed|es)\s+the\s+complexit(?:y|ies)\b",
+    r"\bnavigating\s+(?:these|uncharted)\s+waters\b",
     r"\bharness(?:ing|ed|es)?\s+(?:the\s+power\s+of|its\s+potential)\b",
     r"\bunderpin(?:s|ning|ned)?\b",
     r"\bunderscores?\s+the\s+(?:necessity|importance|urgency|significance)\b",
@@ -35,6 +37,7 @@ AI_MARKER_PATTERNS = [
     r"\bdouble-edged\s+sword\b",
     r"\bpav(?:e|ing|ed|es)\s+the\s+way\b",
     r"\bsheds?\s+light\s+on\b",
+    r"\bshines?\s+a\s+light\b",
     r"\bstrik(?:e|ing|es)\s+a\s+(?:delicate\s+)?balance\b",
     r"\bfoster(?:ing|ed|s)?\s+(?:a\s+culture|collaboration|growth|innovation)\b",
     r"\bcatalyst\s+for(?:\s+change)?\b",
@@ -71,6 +74,25 @@ AI_MARKER_PATTERNS = [
     r"\bunwavering\s+commitment\b",
     r"\bwarrants?\s+(?:careful|serious)\s+consideration\b",
     r"\bproves?\s+to\s+be\b",
+    r"\ba\s+(?:striking|stark)\s+reminder\b",
+    r"\bat\s+the\s+forefront\s+of\b",
+    r"\blinchpin\s+of\b",
+    r"\ba\s+delicate\s+dance\b",
+    r"\blends?\s+credence\s+to\b",
+    r"\bhold\s+the\s+key\s+to\b",
+    r"\bremains?\s+a\s+(?:cornerstone|hallmark|challenge)\b",
+    r"\bin\s+stark\s+contrast\b",
+    r"\bit\s+bears\s+mentioning\b",
+    r"\bcannot\s+be\s+overstated\b",
+    r"\bin\s+an\s+age\s+of\b",
+    r"\bwith\s+that\s+being\s+said\b",
+    r"\bin\s+light\s+of\s+these\s+developments\b",
+    r"\bfuels?\s+the\s+debate\b",
+    r"\ba\s+crucible\s+of\b",
+    r"\bthe\s+advent\s+of\b",
+    r"\bheralds?\s+a\s+new\b",
+    r"\bgarners?\s+(?:significant|increasing)\s+attention\b",
+    r"\bstrike\s+a\s+chord\b",
     # Formulaic Sentence Openers & Transitions
     r"\bone\s+of\s+the\s+most\s+(?:pressing|crucial|significant|pivotal|critical|fundamental)\b",
     r"\bin\s+the\s+contemporary\s+(?:era|world|landscape|age)\b",
@@ -104,11 +126,17 @@ COMMON_ENGLISH_WORDS = {
     "our", "work", "first", "well", "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us"
 }
 
+# Common titles and abbreviations that should NOT trigger sentence boundaries
+ABBREVIATIONS = r"\b(Dr|Mr|Mrs|Ms|Prof|Sr|Jr|vs|e\.g|i\.e|etc|et al|U\.S|U\.K|Fig|approx|dept|govt|corp|inc)\."
+
 
 def split_sentences(text: str) -> List[str]:
     """Splits text into sentences respecting abbreviations, decimal numbers, and quotes."""
-    raw = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9"\'“])', text.strip())
-    sentences = [s.strip() for s in raw if s.strip()]
+    # Temporarily mask abbreviation periods
+    masked = re.sub(ABBREVIATIONS, lambda m: m.group(0).replace(".", "<DOT>"), text.strip())
+    # Split on sentence terminals followed by whitespace and capital letter / quote
+    raw = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9"\'“])', masked)
+    sentences = [s.replace("<DOT>", ".").strip() for s in raw if s.strip()]
     if not sentences and text.strip():
         sentences = [text.strip()]
     return sentences
@@ -137,14 +165,14 @@ def calculate_burstiness(sentence_lengths: List[int]) -> Tuple[float, float, flo
     burstiness_score = min(1.0, max(0.05, cv / 0.70))
 
     # Calibrate probability contribution based on empirical human vs LLM distribution
-    if cv < 0.25:
-        ai_burstiness = 0.95
-    elif cv < 0.35:
-        ai_burstiness = 0.85 - (cv - 0.25) * 1.5
+    if cv < 0.24:
+        ai_burstiness = 0.96
+    elif cv < 0.34:
+        ai_burstiness = 0.86 - (cv - 0.24) * 1.5
     elif cv < 0.48:
-        ai_burstiness = 0.65 - (cv - 0.35) * 2.2
+        ai_burstiness = 0.65 - (cv - 0.34) * 2.2
     else:
-        ai_burstiness = max(0.04, 0.32 - (cv - 0.48) * 0.8)
+        ai_burstiness = max(0.04, 0.30 - (cv - 0.48) * 0.8)
 
     return std_dev, burstiness_score, ai_burstiness
 
@@ -171,7 +199,7 @@ def calculate_marker_perplexity(text: str, total_words: int, sentences: List[str
     if matches >= 2:
         ai_marker_prob = max(0.72, ai_marker_prob)
     if matches >= 4:
-        ai_marker_prob = max(0.90, ai_marker_prob)
+        ai_marker_prob = max(0.92, ai_marker_prob)
 
     return round(perplexity_proxy, 3), ai_marker_prob
 
@@ -204,6 +232,32 @@ def calculate_vocabulary_uniformity(words: List[str], cv: float) -> Tuple[float,
         ai_vocab_uniformity = 0.40
 
     return round(lexical_diversity, 3), ai_vocab_uniformity
+
+
+def calculate_nominalization_density(words: List[str]) -> float:
+    """
+    Computes density of abstract nominalizations (-tion, -sion, -ment, -ance, -ence).
+    LLM academic writing relies heavily on abstract noun stacking.
+    """
+    if not words:
+        return 0.0
+    nom_pattern = re.compile(r'\b[a-z]{4,}(?:tion|sion|ment|ance|ence|ibility|ization)s?\b')
+    nom_count = sum(1 for w in words if nom_pattern.match(w))
+    ratio = nom_count / len(words)
+    # Scaled: > 12% is strong indicator
+    return min(1.0, ratio / 0.12)
+
+
+def calculate_punctuation_variety(text: str, total_words: int) -> float:
+    """
+    Measures variety of organic human punctuation marks (dashes, semicolons, parentheses, questions).
+    AI essays rely almost solely on periods and commas.
+    """
+    human_punct_count = len(re.findall(r'[—–;:\(\)\?\!"]', text))
+    punct_rate = human_punct_count / max(1, total_words)
+    # Higher rate = higher human probability, lower AI probability
+    ai_punct_penalty = max(0.0, 1.0 - (punct_rate / 0.035))
+    return round(ai_punct_penalty, 3)
 
 
 def calculate_structural_repetition(sentences: List[str], words: List[str]) -> float:
@@ -255,6 +309,8 @@ class DetectorService:
         lexical_diversity, ai_vocab_uniformity = calculate_vocabulary_uniformity(words, cv)
         perplexity_proxy, ai_marker_prob = calculate_marker_perplexity(text, word_count, sentences)
         repetition_index = calculate_structural_repetition(sentences, words)
+        ai_nominalization = calculate_nominalization_density(words)
+        ai_punctuation = calculate_punctuation_variety(text, word_count)
 
         # 2. Length Clustering (LLMs cluster sentences within 11–23 words)
         clustered = sum(1 for l in sentence_lengths if 11 <= l <= 23) / len(sentence_lengths)
@@ -268,17 +324,21 @@ class DetectorService:
             repetition_index=round(repetition_index, 3)
         )
 
-        # 3. Composite Ensemble Scoring
+        # 3. Composite Ensemble Scoring with Orthogonal Stylometrics
         composite_ai_score = (
-            ai_burstiness * 0.36 +
-            ai_marker_prob * 0.32 +
-            ai_vocab_uniformity * 0.20 +
-            ai_clustering * 0.12
+            ai_burstiness * 0.32 +
+            ai_marker_prob * 0.28 +
+            ai_vocab_uniformity * 0.18 +
+            ai_clustering * 0.10 +
+            ai_nominalization * 0.06 +
+            ai_punctuation * 0.06
         )
 
         decision_center = 0.44
         if domain in ["academic", "technical"]:
             decision_center = 0.48
+        elif domain == "creative":
+            decision_center = 0.40
 
         # Calibrated logistic sigmoid transform
         z = (composite_ai_score - decision_center) * 6.2
@@ -291,8 +351,11 @@ class DetectorService:
         confidence = (length_factor * 0.50) + (certainty_dist * 0.50)
         confidence = max(0.20, min(0.98, confidence))
 
-        # 5. Sentence-Level Breakdown
+        # 5. Sentence-Level Breakdown with Bayesian Prior Smoothing
+        # Instead of evaluating sentences in a vacuum, incorporate the document-level prior
         sentence_analysis: List[SentenceSignal] = []
+        prior_bias = calibrated_prob * 0.35
+
         for i, s in enumerate(sentences):
             swords = count_words(s)
             sw_count = len(swords)
@@ -309,17 +372,21 @@ class DetectorService:
                 continue
 
             local_markers = sum(len(re.findall(p, s, re.IGNORECASE)) for p in AI_MARKER_PATTERNS)
-            s_prob = 0.35
+            s_prob = 0.25 + prior_bias
             if local_markers > 0:
-                s_prob += 0.30 * local_markers
+                s_prob += 0.32 * local_markers
             if 12 <= sw_count <= 22:
-                s_prob += 0.15
+                s_prob += 0.14
             elif sw_count < 7 or sw_count > 32:
                 s_prob -= 0.18
 
             # Formulaic openers
             if re.match(r'^(?:[A-Z][a-z]+ing\b|Ultimately,|In parallel,|Furthermore,|Moreover,|Additionally,|In conclusion,)', s):
                 s_prob += 0.20
+
+            # Tripartite structures inside the sentence
+            if re.search(r'\b[\w\s]{3,25},\s+[\w\s]{3,25},\s+and\s+[\w\s]{3,25}\b', s, re.IGNORECASE):
+                s_prob += 0.16
 
             s_prob = max(0.05, min(0.95, s_prob))
             suspicion = "high" if s_prob >= 0.65 else "medium" if s_prob >= 0.42 else "low"
@@ -347,9 +414,9 @@ class DetectorService:
             classification = "Likely AI-Generated"
             is_uncertain = False
             evaluation_summary = (
-                f"The text exhibits high structural uniformity, low burstiness, and formulaic transitional phrasing characteristic of LLM outputs "
+                f"The text exhibits high structural uniformity, low burstiness (CV: {round(cv, 2)}), and formulaic transitional phrasing characteristic of LLM outputs "
                 f"(AI probability: {int(calibrated_prob * 100)}%, confidence: {int(confidence * 100)}%). "
-                "Contributing factors include clustered sentence lengths and recurring syntactic template patterns."
+                "Contributing factors include tightly clustered sentence lengths and recurring syntactic template patterns."
             )
         else:
             classification = "Likely Human"
@@ -357,7 +424,7 @@ class DetectorService:
             evaluation_summary = (
                 f"The text demonstrates natural syntactic rhythm and idiosyncratic lexical diversity typical of human authors "
                 f"(AI probability: {int(calibrated_prob * 100)}%, confidence: {int(confidence * 100)}%). "
-                "Strong variation across sentence lengths (burstiness) and organic word choice indicate genuine human composition."
+                "Strong variation across sentence lengths (burstiness) and organic punctuation indicate genuine human composition."
             )
 
         return DetectResponse(
