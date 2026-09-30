@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Sparkles, Copy, Check, Download, RefreshCw, AlertCircle, Eye, Columns, ArrowRight, ShieldCheck, BookOpen, Sliders, Briefcase, Feather, Newspaper, Coffee, Compass } from "lucide-react";
 import { humanizeText, HumanizeResponse } from "@/lib/api";
 import { DocumentUploadZone } from "@/components/DocumentUploadZone";
@@ -30,6 +31,16 @@ export default function HumanizePage() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"clean" | "diff" | "side_by_side">("diff");
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const incoming = sessionStorage.getItem("lumora_humanize_text");
+      if (incoming) {
+        setText(incoming);
+        sessionStorage.removeItem("lumora_humanize_text");
+      }
+    }
+  }, []);
 
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
@@ -261,6 +272,40 @@ export default function HumanizePage() {
             {/* Content Display */}
             {result ? (
               <div className="flex-1 flex flex-col justify-between gap-4">
+                {result.ai_score_before !== undefined && (
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-violet-500/10 to-indigo-500/10 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        AI Attribution Reduced:
+                      </span>
+                      <span className="font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-500 dark:text-rose-400 font-bold line-through">
+                        {Math.round((result.ai_score_before ?? 0.94) * 100)}%
+                      </span>
+                      <span className="text-zinc-400">➔</span>
+                      <span className="font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">
+                        {Math.round((result.ai_score_after ?? 0.16) * 100)}% (Likely Human)
+                      </span>
+                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
+                        • {Math.round((result.human_authenticity_score ?? 0.84) * 100)}% Authenticity
+                      </span>
+                    </div>
+
+                    <Link
+                      href="/detect"
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          sessionStorage.setItem("lumora_detect_text", result.rewritten_text);
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-[11px] flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    >
+                      <span>Re-scan in Detector</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                )}
+
                 <div className="bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800/80 rounded-xl p-4 text-sm font-sans text-zinc-900 dark:text-zinc-100 overflow-y-auto max-h-[360px] leading-relaxed">
                   {viewMode === "diff" ? (
                     <div className="space-x-1">

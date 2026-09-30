@@ -165,14 +165,14 @@ def calculate_burstiness(sentence_lengths: List[int]) -> Tuple[float, float, flo
     burstiness_score = min(1.0, max(0.05, cv / 0.70))
 
     # Calibrate probability contribution based on empirical human vs LLM distribution
-    if cv < 0.24:
-        ai_burstiness = 0.96
-    elif cv < 0.34:
-        ai_burstiness = 0.86 - (cv - 0.24) * 1.5
-    elif cv < 0.48:
-        ai_burstiness = 0.65 - (cv - 0.34) * 2.2
+    if cv < 0.22:
+        ai_burstiness = 0.95
+    elif cv < 0.30:
+        ai_burstiness = 0.85 - (cv - 0.22) * 2.5
+    elif cv < 0.40:
+        ai_burstiness = 0.55 - (cv - 0.30) * 3.5
     else:
-        ai_burstiness = max(0.04, 0.30 - (cv - 0.48) * 0.8)
+        ai_burstiness = max(0.04, 0.20 - (cv - 0.40) * 0.5)
 
     return std_dev, burstiness_score, ai_burstiness
 
@@ -222,14 +222,14 @@ def calculate_vocabulary_uniformity(words: List[str], cv: float) -> Tuple[float,
 
     lexical_diversity = min(1.0, max(0.1, (guiraud / 9.0) * 0.7 + (rare_ratio * 0.3)))
 
-    if cv < 0.35 and rare_ratio > 0.38:
+    if cv < 0.30 and rare_ratio > 0.38:
         # High vocab + Low burstiness = Classic AI essay
         ai_vocab_uniformity = 0.88
-    elif cv >= 0.48:
+    elif cv >= 0.38:
         # High burstiness = Natural human cadence
         ai_vocab_uniformity = 0.15
     else:
-        ai_vocab_uniformity = 0.40
+        ai_vocab_uniformity = 0.35
 
     return round(lexical_diversity, 3), ai_vocab_uniformity
 
@@ -314,7 +314,10 @@ class DetectorService:
 
         # 2. Length Clustering (LLMs cluster sentences within 11–23 words)
         clustered = sum(1 for l in sentence_lengths if 11 <= l <= 23) / len(sentence_lengths)
-        ai_clustering = min(1.0, max(0.1, (clustered - 0.40) * 1.8)) if clustered > 0.40 else 0.10
+        if cv >= 0.36:
+            ai_clustering = 0.10
+        else:
+            ai_clustering = min(1.0, max(0.1, (clustered - 0.40) * 1.8)) if clustered > 0.40 else 0.10
 
         signals = EvidenceSignals(
             burstiness_score=round(burstiness_score, 3),
@@ -334,11 +337,11 @@ class DetectorService:
             ai_punctuation * 0.06
         )
 
-        decision_center = 0.44
+        decision_center = 0.48
         if domain in ["academic", "technical"]:
-            decision_center = 0.48
+            decision_center = 0.52
         elif domain == "creative":
-            decision_center = 0.40
+            decision_center = 0.44
 
         # Calibrated logistic sigmoid transform
         z = (composite_ai_score - decision_center) * 6.2

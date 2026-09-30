@@ -47,3 +47,6 @@ class HumanizeResponse(BaseModel):
     stats: DiffStats
     model_version: str
     timestamp: str
+    ai_score_before: Optional[float] = None
+    ai_score_after: Optional[float] = None
+    human_authenticity_score: Optional[float] = None

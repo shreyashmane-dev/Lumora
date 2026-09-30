@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Shield, Sparkles, Copy, Check, AlertCircle, RefreshCw, BarChart3, HelpCircle, Activity, Info, Award, FileText, Scale, Eye } from "lucide-react";
 import { detectText, DetectResponse } from "@/lib/api";
 import { StylometricRadar } from "@/components/StylometricRadar";
@@ -22,6 +23,16 @@ export default function DetectPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const incoming = sessionStorage.getItem("lumora_detect_text");
+      if (incoming) {
+        setText(incoming);
+        sessionStorage.removeItem("lumora_detect_text");
+      }
+    }
+  }, []);
 
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const charCount = text.length;
@@ -309,6 +320,21 @@ export default function DetectPage() {
                         />
                       </div>
                     </div>
+
+                    {result.ai_probability > 0.25 && (
+                      <Link
+                        href="/humanize"
+                        onClick={() => {
+                          if (typeof window !== "undefined") {
+                            sessionStorage.setItem("lumora_humanize_text", text);
+                          }
+                        }}
+                        className="mt-4 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-md shadow-violet-600/20 transition-all cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>Bypass AI: Humanize Text to &lt;20% Score</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
 

@@ -79,6 +79,9 @@ export interface HumanizeResponse {
   stats: DiffStats;
   model_version: string;
   timestamp: string;
+  ai_score_before?: number;
+  ai_score_after?: number;
+  human_authenticity_score?: number;
 }
 
 export interface AnalyzeResponse {
