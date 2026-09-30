@@ -1,4 +1,28 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+export function getApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // In browser on production (Firebase Hosting / non-localhost)
+  if (
+    typeof window !== "undefined" &&
+    !window.location.hostname.includes("localhost") &&
+    !window.location.hostname.includes("127.0.0.1")
+  ) {
+    return "https://lumora-sqdt.onrender.com";
+  }
+  return "https://lumora-sqdt.onrender.com";
+}
+
+const API_BASE = getApiBase();
+
+// Proactive silent warm-up ping for Render Free Tier (spins up instance on page visit)
+if (typeof window !== "undefined") {
+  setTimeout(() => {
+    fetch(`${getApiBase()}/health`, { mode: "cors" }).catch(() => {
+      // Non-fatal background wake-up ping
+    });
+  }, 500);
+}
 
 export interface SentenceSignal {
   index: number;
@@ -93,11 +117,22 @@ export interface KeyItem {
   monthly_used: number;
 }
 
+async function handleApiFetch(url: string, options: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, options);
+  } catch (err: any) {
+    // Graceful error for Render free tier cold starts
+    throw new Error(
+      "Connecting to LUMORA backend... If the Render server was idle, it may take 30–45s to wake up. Please retry in a few moments."
+    );
+  }
+}
+
 export async function detectText(text: string, apiKey?: string): Promise<DetectResponse> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
-  const res = await fetch(`${API_BASE}/v1/detect`, {
+  const res = await handleApiFetch(`${getApiBase()}/v1/detect`, {
     method: "POST",
     headers,
     body: JSON.stringify({ text })
@@ -119,7 +154,7 @@ export async function humanizeText(
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
-  const res = await fetch(`${API_BASE}/v1/humanize`, {
+  const res = await handleApiFetch(`${getApiBase()}/v1/humanize`, {
     method: "POST",
     headers,
     body: JSON.stringify({ text, style, custom_instructions: customInstructions })
@@ -136,7 +171,7 @@ export async function analyzeWriting(text: string, apiKey?: string): Promise<Ana
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
-  const res = await fetch(`${API_BASE}/v1/analyze`, {
+  const res = await handleApiFetch(`${getApiBase()}/v1/analyze`, {
     method: "POST",
     headers,
     body: JSON.stringify({ text })
@@ -153,7 +188,7 @@ export async function createApiKey(name: string, environment: string = "live", u
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (userId) headers["x-user-id"] = userId;
 
-  const res = await fetch(`${API_BASE}/v1/keys`, {
+  const res = await handleApiFetch(`${getApiBase()}/v1/keys`, {
     method: "POST",
     headers,
     body: JSON.stringify({ name, environment })
@@ -169,7 +204,7 @@ export async function listApiKeys(userId?: string): Promise<KeyItem[]> {
   const headers: Record<string, string> = {};
   if (userId) headers["x-user-id"] = userId;
 
-  const res = await fetch(`${API_BASE}/v1/keys`, { headers });
+  const res = await handleApiFetch(`${getApiBase()}/v1/keys`, { headers });
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data?.error?.message || "Failed to fetch API keys.");
@@ -181,7 +216,7 @@ export async function revokeApiKey(keyId: string, userId?: string): Promise<void
   const headers: Record<string, string> = {};
   if (userId) headers["x-user-id"] = userId;
 
-  const res = await fetch(`${API_BASE}/v1/keys/${keyId}`, { method: "DELETE", headers });
+  const res = await handleApiFetch(`${getApiBase()}/v1/keys/${keyId}`, { method: "DELETE", headers });
   if (!res.ok) {
     const data = await res.json();
     throw new Error(data?.error?.message || "Failed to revoke API key.");
@@ -192,7 +227,7 @@ export async function getUsageMetrics(apiKey?: string): Promise<any> {
   const headers: Record<string, string> = {};
   if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
-  const res = await fetch(`${API_BASE}/v1/usage`, { headers });
+  const res = await handleApiFetch(`${getApiBase()}/v1/usage`, { headers });
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data?.error?.message || "Failed to fetch usage metrics.");
@@ -201,7 +236,7 @@ export async function getUsageMetrics(apiKey?: string): Promise<any> {
 }
 
 export async function getSystemStatus(): Promise<any> {
-  const res = await fetch(`${API_BASE}/v1/status`);
+  const res = await handleApiFetch(`${getApiBase()}/v1/status`, {});
   const data = await res.json();
   if (!res.ok) {
     throw new Error("Failed to fetch system status.");

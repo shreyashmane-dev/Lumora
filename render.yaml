@@ -13,7 +13,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: '["https://lumora.ai","https://*.vercel.app"]'
+        value: '["https://lumora-ai-s.web.app","https://lumora-ai-s.firebaseapp.com","https://one-for-all-5e842.web.app","https://one-for-all-5e842.firebaseapp.com","https://*.web.app","https://*.firebaseapp.com","https://lumora.ai","https://*.render.com","https://*.vercel.app","http://localhost:3000"]'
       - key: DETECTOR_MODEL_VERSION
         value: lumora-ensemble-v1.0.4
       - key: HUMANIZER_MODEL_VERSION

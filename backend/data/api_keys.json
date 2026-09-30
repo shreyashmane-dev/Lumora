@@ -124,5 +124,77 @@
       "/v1/humanize": 0,
       "/v1/analyze": 0
     }
+  },
+  {
+    "id": "key_21a36e5898ec",
+    "name": "Test Key Endpoint",
+    "hashed_key": "a30263cc9e9db204f1bfc422b523e23c1210c8012efd2a7bf139b995edd2ab2c",
+    "prefix": "lum_live_550...dc57",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 2,
+    "is_active": false,
+    "created_at": "2026-09-30T03:15:22.762814+00:00",
+    "last_used_at": "2026-09-30T03:15:22.780849+00:00",
+    "user_id": "dev_default_user",
+    "endpoint_usage": {
+      "/v1/detect": 2,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_f90f8dd8a3a5",
+    "name": "Analytics Integration Key",
+    "hashed_key": "1e44eafc6b6eb4f4118cffff97775e65b31fd8ae8b970e768eeb7454d0341f7d",
+    "prefix": "lum_live_7b4...14af",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 1,
+    "is_active": false,
+    "created_at": "2026-09-30T03:15:22.822074+00:00",
+    "last_used_at": "2026-09-30T03:15:22.823099+00:00",
+    "user_id": "test_user_42",
+    "endpoint_usage": {
+      "/v1/detect": 1,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_5e5f6cce1bca",
+    "name": "Test Key Endpoint",
+    "hashed_key": "4b3281cf9239c4f59ffea190369e5b2cc799769bc05f024d602cef8b07a13a4d",
+    "prefix": "lum_live_aa3...bdc1",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 2,
+    "is_active": false,
+    "created_at": "2026-09-30T04:00:46.203429+00:00",
+    "last_used_at": "2026-09-30T04:00:46.221542+00:00",
+    "user_id": "dev_default_user",
+    "endpoint_usage": {
+      "/v1/detect": 2,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
+  },
+  {
+    "id": "key_f6274dd3890a",
+    "name": "Analytics Integration Key",
+    "hashed_key": "b029768c1269dbcd9110433772b928a5640a0f30678a5c8a9b69bb3cf3523f4c",
+    "prefix": "lum_live_011...1b4c",
+    "environment": "live",
+    "monthly_quota": 10000,
+    "monthly_used": 1,
+    "is_active": false,
+    "created_at": "2026-09-30T04:00:46.283806+00:00",
+    "last_used_at": "2026-09-30T04:00:46.285037+00:00",
+    "user_id": "test_user_42",
+    "endpoint_usage": {
+      "/v1/detect": 1,
+      "/v1/humanize": 0,
+      "/v1/analyze": 0
+    }
   }
 ]

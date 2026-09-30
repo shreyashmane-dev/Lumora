@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Key, Lock, Mail, ArrowRight, ShieldCheck, Zap, RefreshCw, AlertCircle } from "lucide-react";
+import { Key, Lock, Mail, ArrowRight, Zap, RefreshCw, AlertCircle, Sparkles, CheckCircle2, UserPlus, LogIn } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { LumoraLogo } from "@/components/LumoraLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,21 +15,65 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAutoSwitch, setShowAutoSwitch] = useState<"to_signup" | "to_signin" | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
     setError(null);
+    setShowAutoSwitch(null);
     setLoading(true);
+
     try {
       if (isSignUp) {
+        if (password.length < 6) {
+          throw new Error("Password must be at least 6 characters long.");
+        }
         await signup(email, password);
       } else {
         await login(email, password);
       }
       router.push("/dashboard/api-keys");
     } catch (err: any) {
-      setError(err?.message || "Authentication failed. Please verify credentials or use Instant Access.");
+      if (err.message === "INVALID_CREDENTIALS") {
+        setError("Account not found or password incorrect.");
+        setShowAutoSwitch("to_signup");
+      } else if (err.message === "EMAIL_ALREADY_IN_USE") {
+        setError("An account with this email already exists.");
+        setShowAutoSwitch("to_signin");
+      } else {
+        setError(err?.message || "Authentication could not be completed.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAutoCreateAccount = async () => {
+    if (!email || !password) return;
+    setError(null);
+    setShowAutoSwitch(null);
+    setLoading(true);
+    try {
+      await signup(email, password);
+      router.push("/dashboard/api-keys");
+    } catch (err: any) {
+      setError(err?.message || "Could not create account.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAutoSignIn = async () => {
+    if (!email || !password) return;
+    setError(null);
+    setShowAutoSwitch(null);
+    setLoading(true);
+    try {
+      await login(email, password);
+      router.push("/dashboard/api-keys");
+    } catch (err: any) {
+      setError(err?.message || "Could not sign in.");
     } finally {
       setLoading(false);
     }
@@ -36,6 +81,7 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     setError(null);
+    setShowAutoSwitch(null);
     setLoading(true);
     try {
       await loginWithGoogle();
@@ -55,34 +101,37 @@ export default function LoginPage() {
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-500/40 text-violet-400 mb-2 shadow-lg shadow-violet-600/10">
-            <Key className="w-6 h-6" />
+        {/* Header with Custom Bespoke Lumora Logo */}
+        <div className="text-center space-y-3 flex flex-col items-center">
+          <LumoraLogo size={56} animated={true} />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              {isSignUp ? "Create Developer Account" : "Developer Sign In"}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-sm">
+              {isSignUp
+                ? "Register to receive a persistent API key and 10,000 monthly quota."
+                : "Manage API keys, track quota consumption, and access the live engine."}
+            </p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            {isSignUp ? "Create Developer Account" : "Developer Sign In"}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400">
-            {isSignUp
-              ? "Register to receive a persistent API key and 10,000 monthly free requests."
-              : "Manage API keys, track quota consumption, and access the live playground."}
-          </p>
         </div>
 
-        {/* Demo Mode Quick Access Button */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-950/50 via-slate-900 to-indigo-950/50 border border-violet-500/40 text-center space-y-2.5 shadow-lg">
+        {/* 1-Click Instant Developer Access */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-950/60 via-slate-900 to-indigo-950/60 border border-violet-500/40 text-center space-y-2.5 shadow-xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-violet-600/5 group-hover:bg-violet-600/10 transition-colors pointer-events-none" />
           <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-violet-300">
-            <Zap className="w-4 h-4 text-violet-400" />
-            <span>Instant Developer Access (Zero Setup)</span>
+            <Zap className="w-4 h-4 text-cyan-400" />
+            <span>Instant Developer Access (Zero Wait)</span>
           </div>
-          <p className="text-[11px] text-slate-400">
-            No signup or password needed. Jump straight into the portal with pre-loaded demo credentials.
+          <p className="text-[11px] text-slate-300">
+            No signup or password required. Jump straight into the developer console and generate active API keys.
           </p>
           <button
             onClick={handleDemo}
-            className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-violet-600/25"
+            type="button"
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-violet-600/25 active:scale-[0.99]"
           >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
             <span>Launch Developer Console Now</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
@@ -97,6 +146,7 @@ export default function LoginPage() {
               onClick={() => {
                 setIsSignUp(false);
                 setError(null);
+                setShowAutoSwitch(null);
               }}
               className={`py-2 rounded-lg transition-all ${
                 !isSignUp ? "bg-violet-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
@@ -109,6 +159,7 @@ export default function LoginPage() {
               onClick={() => {
                 setIsSignUp(true);
                 setError(null);
+                setShowAutoSwitch(null);
               }}
               className={`py-2 rounded-lg transition-all ${
                 isSignUp ? "bg-violet-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
@@ -131,7 +182,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="developer@domain.com"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 placeholder:text-slate-600"
                 />
               </div>
             </div>
@@ -149,27 +200,53 @@ export default function LoginPage() {
                   placeholder="••••••••••••"
                   required
                   minLength={6}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 placeholder:text-slate-600"
                 />
               </div>
             </div>
 
+            {/* Error & Smart Resolution Banner */}
             {error && (
-              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
-                <span>{error}</span>
+              <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs space-y-2.5">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+
+                {/* 1-Click Smart Resolution Action */}
+                {showAutoSwitch === "to_signup" && (
+                  <button
+                    type="button"
+                    onClick={handleAutoCreateAccount}
+                    className="w-full py-2 px-3 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-all shadow"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Create New Account with This Email &amp; Password</span>
+                  </button>
+                )}
+
+                {showAutoSwitch === "to_signin" && (
+                  <button
+                    type="button"
+                    onClick={handleAutoSignIn}
+                    className="w-full py-2 px-3 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-all shadow"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Sign In with This Password</span>
+                  </button>
+                )}
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-violet-600/20"
+              className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-violet-600/20 active:scale-[0.99]"
             >
               {loading ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Authenticating...</span>
+                  <span>Processing...</span>
                 </>
               ) : (
                 <span>{isSignUp ? "Create Developer Account" : "Sign In to Console"}</span>
@@ -190,6 +267,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogle}
             disabled={loading}
+            type="button"
             className="w-full py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800/60 text-slate-200 font-medium text-xs transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">

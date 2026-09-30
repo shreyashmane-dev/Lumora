@@ -23,9 +23,15 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://lumora-ai-s.web.app",
+        "https://lumora-ai-s.firebaseapp.com",
+        "https://one-for-all-5e842.web.app",
+        "https://one-for-all-5e842.firebaseapp.com",
         "https://lumora.ai",
         "https://*.render.com",
-        "https://*.vercel.app"
+        "https://*.vercel.app",
+        "https://*.web.app",
+        "https://*.firebaseapp.com"
     ]
 
     @field_validator("CORS_ORIGINS", mode="before")

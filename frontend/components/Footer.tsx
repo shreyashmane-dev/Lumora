@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Sparkles, Shield, Heart } from "lucide-react";
+import { Shield, Heart } from "lucide-react";
+import { LumoraLogo } from "./LumoraLogo";
 
 export function Footer() {
   return (
@@ -8,11 +9,12 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand info */}
           <div className="md:col-span-2 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-violet-600/20 border border-violet-500/40 flex items-center justify-center text-violet-400">
-                <Sparkles className="w-4 h-4" />
+            <div className="flex items-center gap-3">
+              <LumoraLogo size={30} animated={true} />
+              <div className="flex flex-col">
+                <span className="font-bold tracking-tight text-white text-base">LUMORA</span>
+                <span className="text-[9px] uppercase tracking-widest text-slate-500 font-mono -mt-1">Writing Intel</span>
               </div>
-              <span className="font-semibold tracking-tight text-white text-base">LUMORA</span>
             </div>
             <p className="text-zinc-400 text-sm max-w-sm">
               Understand the text. Rewrite it naturally. A privacy-first writing intelligence platform providing probabilistic AI-text analysis and semantic-preserving rewriting.
